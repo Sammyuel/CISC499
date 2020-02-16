@@ -15,7 +15,7 @@
  *    }
  */
 
-import { CHANGE_USERNAME, CHANGE_DATA} from './constants';
+import { CHANGE_USERNAME, CHANGE_DATA } from './constants';
 
 /**
  * Changes the input field of the form
@@ -25,16 +25,16 @@ import { CHANGE_USERNAME, CHANGE_DATA} from './constants';
  * @return {object} An action object with a type of CHANGE_USERNAME
  */
 export function changeUsername(username) {
-	console.log(username)
+  console.log(username);
   return {
     type: CHANGE_USERNAME,
     username,
   };
 }
 
-export function changeData(graphData){
-	return{
-		type: CHANGE_DATA,
-		graphData,
-	};
+export function changeData(graphData) {
+  return {
+    type: CHANGE_DATA,
+    graphData,
+  };
 }

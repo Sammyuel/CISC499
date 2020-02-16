@@ -33,18 +33,24 @@ import { CHANGE_USERNAME, CHANGE_DATA } from './constants';
 //                           {fx:203.5,fy:205.5},
 //                           {fx:203.5,fy:206},
 //                           {fx:200,fy:206}]
-const nodes = [{fx:200,fy:203.5}]
+const nodes = [{ fx: 200, fy: 203.5 }];
 export const initialState = {
   username: '',
-  graphData : {
+  graphData: {
     data: {
-      nodes: [ {id: "a", fx:5,fy:5}, { id: "b", fx:6,fy:4}, { id: "c", fx:7,fy:3 }, { id: "d", fx:11,fy:9 }, { id: "e", fx:10,fy:10 }],
+      nodes: [
+        { id: 'a', fx: 5, fy: 5 },
+        { id: 'b', fx: 6, fy: 4 },
+        { id: 'c', fx: 7, fy: 3 },
+        { id: 'd', fx: 11, fy: 9 },
+        { id: 'e', fx: 10, fy: 10 },
+      ],
       links: [],
       // nodes: [],
       // links: [],
-    }
+    },
   },
-  answer :[]
+  answer: [],
 };
 
 /* eslint-disable default-case, no-param-reassign */
@@ -56,8 +62,8 @@ const homeReducer = (state = initialState, action) =>
         draft.username = action.username.replace(/@/gi, '');
         break;
       case CHANGE_DATA:
-      	draft.graphData = action.graphData
-      	break;
+        draft.graphData = action.graphData;
+        break;
     }
   });
 
