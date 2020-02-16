@@ -9,11 +9,11 @@ export const scope = 'boilerplate.components.Header';
 
 export default defineMessages({
   home: {
-    id: `${scope}.home`,
-    defaultMessage: 'Home',
+    id: `${scope}.run`,
+    defaultMessage: 'Run Algorithm',
   },
   features: {
-    id: `${scope}.features`,
-    defaultMessage: 'Features',
+    id: `${scope}.ran`,
+    defaultMessage: 'Randomize Points (15)',
   },
 });

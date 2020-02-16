@@ -13,4 +13,16 @@ const makeSelectUsername = () =>
     homeState => homeState.username,
   );
 
-export { selectHome, makeSelectUsername };
+const makeSelectData = () =>
+	createSelector(
+		selectHome,
+		homeState => homeState.graphData,
+	);
+
+const makeSelectAnswer = () => 
+	createSelector(
+		selectHome, 
+		homeState => homeState.answer);
+
+export { selectHome, makeSelectUsername, makeSelectData, makeSelectAnswer };
+	
