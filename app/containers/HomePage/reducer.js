@@ -38,6 +38,13 @@ export const initialState = {
   username: '',
   graphData: {
     data: {
+      points: [
+        { id: 'a', fx: 5, fy: 5 },
+        { id: 'b', fx: 6, fy: 4 },
+        { id: 'c', fx: 7, fy: 3 },
+        { id: 'd', fx: 11, fy: 9 },
+        { id: 'e', fx: 10, fy: 10 },
+      ],
       nodes: [
         { id: 'a', fx: 5, fy: 5 },
         { id: 'b', fx: 6, fy: 4 },

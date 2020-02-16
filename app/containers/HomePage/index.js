@@ -74,6 +74,65 @@ export function HomePage({
 
   const forceUpdate = useForceUpdate();
 
+  const createPoints = function(){
+    let xPoints = randomizePoints(20)
+    let yPoints = randomizePoints(20)
+    let points = []
+    for(let i=0; i<xPoints.length; i++){
+      points.push({x:xPoints[i], y:yPoints[i]})
+    }
+    let newNodes = [];
+
+
+    for (const node of points) {
+      const setUUID = uuid();
+      console.log(parseInt(node.fx))
+      const tempNode = {
+        id: setUUID,
+        fx: parseInt(node.x),
+        fy: parseInt(node.y),
+        fontColor: 'transparent',
+        fontSize: 0,
+        size: 50,
+      };
+
+      newNodes.push(tempNode);
+    }
+    console.log(newNodes)
+
+    let selfLinks = []
+
+    for (const node of newNodes) {
+      const link = {
+        source: node.id,
+        target: node.id
+      };
+
+      selfLinks.push(link);
+    }
+
+
+    newNodes = transformCoords(newNodes);
+    graphData.data.links = selfLinks;
+    graphData.data.nodes = newNodes;
+    graphData.data.points = points;
+    forceUpdate();
+    console.log("test")
+  }
+
+  const randomizePoints = function(number){
+    var arr = [];
+    let max = 60;
+    let min = 10;
+    while(arr.length < number){
+        var r = Math.floor(Math.random() * (max - min + 1) + min);
+        if(arr.indexOf(r) === -1) arr.push(r);
+    }
+    return arr.filter(function (value) {
+      return !Number.isNaN(value);});
+  }
+
+
   const draw = function() {
     const sampleCoordinates1 = [
       { x: -19, y: 17 },
@@ -140,10 +199,9 @@ export function HomePage({
       { fx: 200, fy: 206 },
     ];
 
-    const test = graphAlgorthmRunner(sampleCoordinates1);
-    console.log(test);
+    const test = graphAlgorthmRunner(graphData.data.points);
 
-    drawGraph(sampleCoordinates1, test);
+    drawGraph(graphData.data.points, test);
     forceUpdate();
   };
 
@@ -569,6 +627,7 @@ export function HomePage({
   };
 
   const drawNodes = function(nodes) {
+    graphData.data.links = []
     for (const node of nodes) {
       const link = { source: node.id, target: node.id };
       graphData.data.links.push(link);
@@ -889,7 +948,8 @@ export function HomePage({
         />
       </Helmet>
 
-      <Button onClick={draw}>test</Button>
+      <Button onClick={draw}>Run Algorithm</Button>
+      <Button onClick={createPoints}>Randomize Points</Button>
 
       <Graph
         id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
@@ -908,37 +968,6 @@ export function HomePage({
         onNodePositionChange={onNodePositionChange}
       />
 
-      <div>
-        <CenteredSection>
-          <H2>
-            <FormattedMessage {...messages.startProjectHeader} />
-          </H2>
-          <p>
-            <FormattedMessage {...messages.startProjectMessage} />
-          </p>
-        </CenteredSection>
-        <Section>
-          <H2>
-            <FormattedMessage {...messages.trymeHeader} />
-          </H2>
-          <Form onSubmit={onSubmitForm}>
-            <label htmlFor="username">
-              <FormattedMessage {...messages.trymeMessage} />
-              <AtPrefix>
-                <FormattedMessage {...messages.trymeAtPrefix} />
-              </AtPrefix>
-              <Input
-                id="username"
-                type="text"
-                placeholder="mxstbr"
-                value={username}
-                onChange={onChangeUsername}
-              />
-            </label>
-          </Form>
-          <ReposList {...reposListProps} />
-        </Section>
-      </div>
     </article>
   );
 }
