@@ -11,7 +11,7 @@ import messages from './messages';
 function Header() {
   return (
     <div>
-      <A href="https://www.reactboilerplate.com/">
+      <A href="http://www.eurocg2019.uu.nl/papers/17.pdf">
         <Img src={Banner} alt="react-boilerplate - Logo" />
       </A>
 
