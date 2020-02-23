@@ -957,7 +957,7 @@ export function HomePage({
       <Card>
             <Card.Img variant="top" src={Banner} />
             <Card.Body>
-              <Button variant="primary" href="http://www.eurocg2019.uu.nl/papers/17.pdf">Go somewhere</Button>
+              <Button variant="primary" href="http://www.eurocg2019.uu.nl/papers/17.pdf">Link to Paper</Button>
               <Card.Text>
                 Click the link above to read about the MaxRCH and other similar algorithms
               </Card.Text>
