@@ -351,7 +351,7 @@ export function HomePage({
         );
         const UPR = modifiedInput.filter(
           coord =>
-            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y ,
+            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y 
         );
         let countForS = 0;
         let resultForS = [];
@@ -495,12 +495,11 @@ export function HomePage({
     if (r && q && r.y > p.y && r.x < p.x && r.y < q.y) {
       return 3;
     }  
-  
-    if (r.x < q.x && r.y > q.y && r.x > p.x) {
-      return 1;
-    }
     if (r.y > q.y && r.x < p.x) {
       return 4;
+    }
+    if (r.x < q.x && r.y > q.y && r.x > p.x) {
+      return 1;
     }
 
     return 5;
