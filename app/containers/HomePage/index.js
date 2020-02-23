@@ -949,10 +949,6 @@ export function HomePage({
         />
       </Helmet>
 
-      <Header>
-      </Header>
-
-
       <br />
       <Card>
             <Card.Img variant="top" src={Banner} />
