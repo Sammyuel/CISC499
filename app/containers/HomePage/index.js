@@ -351,7 +351,7 @@ export function HomePage({
         );
         const UPR = modifiedInput.filter(
           coord =>
-            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y 
+            coord.x > rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y 
         );
         let countForS = 0;
         let resultForS = [];
