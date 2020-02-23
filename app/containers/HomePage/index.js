@@ -31,13 +31,6 @@ import List from 'components/List';
 import Header from 'components/Header';
 import ReposList from 'components/ReposList';
 import { Graph, Link } from 'react-d3-graph';
-import Button from 'react-bootstrap/Button';
-import ButtonGroup from 'react-bootstrap/ButtonGroup';
-import Jumbotron from 'react-bootstrap/Jumbotron';
-import Card from 'react-bootstrap/Card';
-import Badge from 'react-bootstrap/Badge';
-import Dropdown from 'react-bootstrap/Dropdown';
-import Accordion from 'react-bootstrap/Accordion';
 import AtPrefix from './AtPrefix';
 import CenteredSection from './CenteredSection';
 import Form from './Form';
@@ -50,8 +43,15 @@ import {
   makeSelectUsername,
   makeSelectData,
   makeSelectAnswer,
-  makeSelectAnswerShown,
+  makeSelectAnswerShown
 } from './selectors';
+import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup'
+import Jumbotron from 'react-bootstrap/Jumbotron';
+import Card from 'react-bootstrap/Card';
+import Badge from 'react-bootstrap/Badge';
+import Dropdown from 'react-bootstrap/Dropdown';
+import Accordion from 'react-bootstrap/Accordion';
 import reducer from './reducer';
 import saga from './saga';
 import Banner from './Header.png';
@@ -73,6 +73,7 @@ export function HomePage({
   onChangeUsername,
   onChangeData,
   graphData,
+
 }) {
   useInjectReducer({ key, reducer });
   useInjectSaga({ key, saga });
@@ -84,18 +85,19 @@ export function HomePage({
 
   const forceUpdate = useForceUpdate();
 
-  const createPoints = function(numberOfPoints) {
-    const xPoints = randomizePoints(20);
-    const yPoints = randomizePoints(20);
-    const points = [];
-    for (let i = 0; i < xPoints.length; i++) {
-      points.push({ x: xPoints[i], y: yPoints[i] });
+  const createPoints = function(numberOfPoints){
+    let xPoints = randomizePoints(20)
+    let yPoints = randomizePoints(20)
+    let points = []
+    for(let i=0; i<xPoints.length; i++){
+      points.push({x:xPoints[i], y:yPoints[i]})
     }
     let newNodes = [];
 
+
     for (const node of points) {
       const setUUID = uuid();
-      console.log(parseInt(node.fx));
+      console.log(parseInt(node.fx))
       const tempNode = {
         id: setUUID,
         fx: parseInt(node.x),
@@ -107,57 +109,58 @@ export function HomePage({
 
       newNodes.push(tempNode);
     }
-    console.log(newNodes);
+    console.log(newNodes)
 
-    const selfLinks = [];
+    let selfLinks = []
 
     for (const node of newNodes) {
       const link = {
         source: node.id,
-        target: node.id,
+        target: node.id
       };
 
       selfLinks.push(link);
     }
 
+
     newNodes = transformCoords(newNodes);
     graphData.data.links = selfLinks;
     graphData.data.nodes = newNodes;
     graphData.data.points = points;
-    graphData.data.text = 'Run Algorithm';
-    graphData.data.count = 0;
+    graphData.data.text = "Run Algorithm"
+    graphData.data.count = 0 ;
     forceUpdate();
-    console.log('test');
-  };
+    console.log("test")
+  }
 
-  const randomizePoints = function(number) {
-    const arr = [];
-    const max = 60;
-    const min = 10;
-    while (arr.length < number) {
-      const r = Math.floor(Math.random() * (max - min + 1) + min);
-      if (arr.indexOf(r) === -1) arr.push(r);
+
+  const randomizePoints = function(number){
+    var arr = [];
+    let max = 60;
+    let min = 10;
+    while(arr.length < number){
+        var r = Math.floor(Math.random() * (max - min + 1) + min);
+        if(arr.indexOf(r) === -1) arr.push(r);
     }
-    return arr.filter(function(value) {
-      return !Number.isNaN(value);
-    });
-  };
+    return arr.filter(function (value) {
+      return !Number.isNaN(value);});
+  }
+
 
   const runAndDraw = function() {
+
     const test = graphAlgorthmRunner(graphData.data.points);
     graphData.answer = test;
-    graphData.answerShown = test.length - 1;
+    graphData.answerShown = test.length - 1
 
-    console.log('look below');
-    console.log(test);
+    console.log("look below")
+    console.log(test)
 
-    drawGraph(
-      graphData.data.points,
-      graphData.answer[graphData.answerShown].links,
+
+    drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links, 
       graphData.answer[graphData.answerShown].p,
-      graphData.answer[graphData.answerShown].q,
-    );
-    graphData.data.text = 'Alternate Solution';
+      graphData.answer[graphData.answerShown].q);
+    graphData.data.text = "Alternate Solution"
     forceUpdate();
   };
 
@@ -168,19 +171,15 @@ export function HomePage({
   };
 
   const drawAlternate = function() {
-    console.log(graphData.answerShown);
-    console.log(graphData.answer);
-    graphData.answerShown =
-      (graphData.answerShown + 1) % graphData.answer.length;
+    console.log(graphData.answerShown)
+    console.log(graphData.answer)
+    graphData.answerShown = (graphData.answerShown + 1 ) % graphData.answer.length 
 
-    drawGraph(
-      graphData.data.points,
-      graphData.answer[graphData.answerShown].links,
+    drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links,
       graphData.answer[graphData.answerShown].p,
-      graphData.answer[graphData.answerShown].q,
-    );
-    forceUpdate();
-  };
+      graphData.answer[graphData.answerShown].q);
+    forceUpdate();    
+  }
 
   // the graph configuration, you only need to pass down properties
   // that you want to override, otherwise default ones will be used
@@ -242,6 +241,7 @@ export function HomePage({
       return 0;
     });
 
+
     let result = [];
     let count = 0;
     for (let pIndex = 0; pIndex < sortedGraphCoordinates.length; pIndex++) {
@@ -268,32 +268,33 @@ export function HomePage({
           [],
         );
         const links = oneTripleResultForQ[1].concat(threeTripleResultForQ[1]);
-        const countForPQ = oneTripleResultForQ[0] + threeTripleResultForQ[0];
-
+        const countForPQ = oneTripleResultForQ[0] + threeTripleResultForQ[0]
+    
         if (
           threeTripleResultForQ[1] &&
           oneTripleResultForQ[1] &&
           count < countForPQ
         ) {
-          count = countForPQ;
-          result = [];
-          result.push({ p, q, links });
-        } else if (
+          count = countForPQ
+          result = []
+          result.push({p, q, links});
+        }
+        else if (
           threeTripleResultForQ[1] &&
           oneTripleResultForQ[1] &&
           count == countForPQ
-        ) {
-          result.push({ p, q, links });
+          ){
+          result.push({p, q, links})
         }
       }
     }
     graphData.data.count = count;
-    console.log('look above');
+    console.log("look above")
     return result;
   };
 
   const threeTripleStaircase = function(previous, p, q, input, links) {
-    const modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
+    let modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
 
     let count = previous;
     let result = links;
@@ -350,7 +351,7 @@ export function HomePage({
         );
         const UPR = modifiedInput.filter(
           coord =>
-            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y,
+            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y ,
         );
         let countForS = 0;
         let resultForS = [];
@@ -487,13 +488,14 @@ export function HomePage({
   };
 
   const rTypeMethodForThreeTripleStaircase = function(p, q, r) {
+
     if (r.y > p.y && r.x > p.x && r.x <= q.x && r.y <= q.y) {
       return 2.5;
     }
     if (r && q && r.y > p.y && r.x < p.x && r.y < q.y) {
       return 3;
-    }
-
+    }  
+  
     if (r.x < q.x && r.y > q.y && r.x > p.x) {
       return 1;
     }
@@ -508,7 +510,7 @@ export function HomePage({
     if (r.y > p.y && r.x <= q.x && r.y <= q.y) {
       return 2;
     }
-    if (r.y < p.y && r.x < q.x && r.y < q.y) {
+    if (r.y < p.y && r.x < q.x && r.y <q.y) {
       return 3;
     }
     if (r.x > q.x && p.y < r.y && q.y > r.y) {
@@ -562,10 +564,11 @@ export function HomePage({
     const drawLinksThree = [];
     const drawLinksFour = [];
 
+
     for (const node of nodes) {
-      let color = 'black';
-      if (node == q || node == p) {
-        color = 'lightgreen';
+      let color = "black"
+      if (node == q || node == p){
+        color = 'lightgreen'
       }
       const setUUID = uuid();
       const tempNode = {
@@ -575,7 +578,7 @@ export function HomePage({
         fontColor: 'transparent',
         fontSize: 0,
         size: 50,
-        color,
+        color: color
       };
 
       newNodes.push(tempNode);
@@ -604,7 +607,7 @@ export function HomePage({
         drawLinksThree.push(tempLink);
       }
     }
-    newNodes = transformCoords(newNodes, p, q);
+    newNodes = transformCoords(newNodes,p, q);
     graphData.data.nodes = newNodes;
     drawNodes(graphData.data.nodes);
     drawReverseTwoStair(newNodes, drawLinksTwoReverse);
@@ -615,7 +618,7 @@ export function HomePage({
   };
 
   const drawNodes = function(nodes) {
-    graphData.data.links = [];
+    graphData.data.links = []
     for (const node of nodes) {
       const link = { source: node.id, target: node.id };
       graphData.data.links.push(link);
@@ -836,6 +839,7 @@ export function HomePage({
   };
 
   const transformCoords = function(nodes, p, q) {
+
     // function that orients graph output with (0,0) in the centre
     // coordinates are given on smaller scale and assumes (0,0) is in the centre
 
@@ -853,7 +857,7 @@ export function HomePage({
 
     // move center to center of graph (400,200)
     for (const coords of nodes) {
-      console.log(coords);
+      console.log(coords)
       // if((coords.x == p.x && coords.y == p.y) || (coords.x == q.x && coords.y == q.y)){
       //   coords.color = 'red'
       // }
@@ -863,6 +867,8 @@ export function HomePage({
 
       const xDiff = coords.fx - xCenter; // move all x values to the left (smaller x value)
       coords.fx = xDiff * scale + (250 - xCenter * scale);
+
+      
     }
     // flip the y-values (smaller y-values represent higher position on graph)
     yMax = Math.max(...nodes.map(point => point.fy));
@@ -929,9 +935,9 @@ export function HomePage({
     // window.alert(`Node ${nodeId} is moved to new position. New position is x= ${x} y= ${y}`);
   };
 
-  const setPointNumber = function(number) {
-    graphData.data.numberOfPoints = number;
-  };
+  const setPointNumber = function(number){
+    graphData.data.numberOfPoints = number
+  }
 
   return (
     <article>
@@ -943,68 +949,59 @@ export function HomePage({
         />
       </Helmet>
 
+      <Header>
+      </Header>
+
+
       <br />
       <Card>
-        <Card.Img variant="top" src={Banner} />
-        <Card.Body>
-          <Button
-            variant="primary"
-            href="http://www.eurocg2019.uu.nl/papers/17.pdf"
-          >
-            Go somewhere
-          </Button>
-          <Card.Text>
-            Click the link above to read about the MaxRCH and other similar
-            algorithms
-          </Card.Text>
-        </Card.Body>
-      </Card>
+            <Card.Img variant="top" src={Banner} />
+            <Card.Body>
+              <Button variant="primary" href="http://www.eurocg2019.uu.nl/papers/17.pdf">Go somewhere</Button>
+              <Card.Text>
+                Click the link above to read about the MaxRCH and other similar algorithms
+              </Card.Text>
+            </Card.Body>
+          </Card>
       <br />
-      <ButtonGroup className="mr-2" aria-label="First group">
-        <Button variant="secondary" size="lg" active onClick={createPoints}>
-          Randomize Points
-        </Button>
-      </ButtonGroup>
-      <Button variant="info" size="sm">
-        Number Of Points <Badge variant="light">20</Badge>
-        <span className="sr-only">unread messages</span>
-      </Button>
+    <ButtonGroup className="mr-2" aria-label="First group">
+      <Button variant="secondary" size="lg" active onClick={createPoints}>Randomize Points</Button>
+    </ButtonGroup>
+    <Button variant="info" size="sm">
+      Number Of Points <Badge variant="light">20</Badge>
+      <span className="sr-only">unread messages</span>
+    </Button>
 
-      <Jumbotron>
+    <Jumbotron >
+
+
         <ButtonGroup className="mr-2" aria-label="First group">
-          <Button
-            variant="outline-primary"
-            size="lg"
-            active
-            onClick={
-              graphData.data.text == 'Run Algorithm'
-                ? runAndDraw
-                : drawAlternate
-            }
-          >
-            {graphData.data.text}
-          </Button>
+
+          <Button variant="outline-primary" size="lg" active onClick={graphData.data.text == "Run Algorithm" ? runAndDraw :drawAlternate}>{graphData.data.text}</Button>
         </ButtonGroup>
 
-        <Badge variant="info">Count: {graphData.data.count}</Badge>
+      <Badge variant="info">Count: {graphData.data.count}</Badge>   
 
-        <Graph
-          id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
-          data={graphData.data}
-          config={myConfig}
-          onClickNode={onClickNode}
-          onDoubleClickNode={onDoubleClickNode}
-          onRightClickNode={onRightClickNode}
-          onClickGraph={onClickGraph}
-          onClickLink={onClickLink}
-          onRightClickLink={onRightClickLink}
-          onMouseOverNode={onMouseOverNode}
-          onMouseOutNode={onMouseOutNode}
-          onMouseOverLink={onMouseOverLink}
-          onMouseOutLink={onMouseOutLink}
-          onNodePositionChange={onNodePositionChange}
-        />
-      </Jumbotron>
+      <Graph
+        id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
+        data={graphData.data}
+        config={myConfig}
+        onClickNode={onClickNode}
+        onDoubleClickNode={onDoubleClickNode}
+        onRightClickNode={onRightClickNode}
+        onClickGraph={onClickGraph}
+        onClickLink={onClickLink}
+        onRightClickLink={onRightClickLink}
+        onMouseOverNode={onMouseOverNode}
+        onMouseOutNode={onMouseOutNode}
+        onMouseOverLink={onMouseOverLink}
+        onMouseOutLink={onMouseOutLink}
+        onNodePositionChange={onNodePositionChange}
+      />      
+    </Jumbotron>
+
+
+
     </article>
   );
 }
