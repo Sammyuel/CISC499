@@ -3,6 +3,7 @@
  */
 
 import styled from 'styled-components';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const A = styled.a`
   color: #41addd;

@@ -25,4 +25,9 @@ const makeSelectAnswer = () =>
     homeState => homeState.answer,
   );
 
-export { selectHome, makeSelectUsername, makeSelectData, makeSelectAnswer };
+const makeSelectAnswerShown = () =>
+createSelector(
+  selectHome,
+  homeState => homeState.anserShown);
+
+export { selectHome, makeSelectUsername, makeSelectData, makeSelectAnswer, makeSelectAnswerShown };

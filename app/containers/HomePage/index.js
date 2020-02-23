@@ -26,9 +26,11 @@ import {
   makeSelectError,
 } from 'containers/App/selectors';
 import H2 from 'components/H2';
+import ListItem from 'components/ListItem';
+import List from 'components/List';
+import Header from 'components/Header';
 import ReposList from 'components/ReposList';
 import { Graph, Link } from 'react-d3-graph';
-import Button from 'components/Button';
 import AtPrefix from './AtPrefix';
 import CenteredSection from './CenteredSection';
 import Form from './Form';
@@ -41,9 +43,18 @@ import {
   makeSelectUsername,
   makeSelectData,
   makeSelectAnswer,
+  makeSelectAnswerShown
 } from './selectors';
+import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup'
+import Jumbotron from 'react-bootstrap/Jumbotron';
+import Card from 'react-bootstrap/Card';
+import Badge from 'react-bootstrap/Badge';
+import Dropdown from 'react-bootstrap/Dropdown';
+import Accordion from 'react-bootstrap/Accordion';
 import reducer from './reducer';
 import saga from './saga';
+import Banner from './Header.png';
 const uuid = require('uuid/v4');
 
 const key = 'home';
@@ -62,7 +73,7 @@ export function HomePage({
   onChangeUsername,
   onChangeData,
   graphData,
-  answer,
+
 }) {
   useInjectReducer({ key, reducer });
   useInjectSaga({ key, saga });
@@ -74,7 +85,7 @@ export function HomePage({
 
   const forceUpdate = useForceUpdate();
 
-  const createPoints = function(){
+  const createPoints = function(numberOfPoints){
     let xPoints = randomizePoints(20)
     let yPoints = randomizePoints(20)
     let points = []
@@ -116,9 +127,12 @@ export function HomePage({
     graphData.data.links = selfLinks;
     graphData.data.nodes = newNodes;
     graphData.data.points = points;
+    graphData.data.text = "Run Algorithm"
+    graphData.data.count = 0 ;
     forceUpdate();
     console.log("test")
   }
+
 
   const randomizePoints = function(number){
     var arr = [];
@@ -133,75 +147,20 @@ export function HomePage({
   }
 
 
-  const draw = function() {
-    const sampleCoordinates1 = [
-      { x: -19, y: 17 },
-      { x: -11, y: 20 },
-      { x: -8, y: 12 },
-      { x: -5, y: 8 },
-      { x: 1, y: 1 },
-      { x: 2, y: 0 },
-      { x: 5, y: 5 },
-      { x: 6.5, y: 4 },
-      { x: 6, y: 15 },
-      { x: 9, y: 5 },
-      { x: 8, y: 14 },
-      { x: 10, y: 3 },
-      { x: 11, y: 4 },
-      { x: 13, y: 6 },
-      { x: 15, y: 8 },
-      { x: 17, y: 12 },
-      { x: 16, y: 10 },
-      { x: 18, y: 5 },
-      { x: 20, y: 7 },
-      { x: 25, y: -10 },
-      { x: 27, y: -15 },
-      { x: 30, y: -20 },
-      { x: 32, y: -12 },
-    ];
-    const sampleCoordinates2 = [
-      { x: 1, y: 1 },
-      { x: 4, y: 13 },
-      { x: 7, y: -1 },
-      { x: 9, y: -4 },
-      { x: 11, y: -7 },
-      { x: 13, y: -9 },
-      { x: 15, y: -11 },
-      { x: 17, y: -13 },
-      { x: 19, y: -15 },
-      { x: 21, y: -17 },
-      { x: 23, y: -19 },
-      { x: 25, y: -25 },
-      { x: 28, y: -22 },
-    ];
-
-    const testCoordinates = [
-      { fx: 200, fy: 203.5 },
-      { fx: 201, fy: 203.5 },
-      { fx: 201, fy: 203 },
-      { fx: 202, fy: 203 },
-      { fx: 202, fy: 202.5 },
-      { fx: 203, fy: 202.5 },
-      { fx: 203, fy: 202 },
-      { fx: 205, fy: 202 },
-      { fx: 205, fy: 200 },
-      { fx: 205.5, fy: 201.5 },
-      { fx: 205.5, fy: 203 },
-      { fx: 206, fy: 203 },
-      { fx: 206, fy: 204 },
-      { fx: 206.25, fy: 204 },
-      { fx: 207, fy: 204 },
-      { fx: 206.25, fy: 205 },
-      { fx: 205, fy: 205 },
-      { fx: 205, fy: 205.5 },
-      { fx: 203.5, fy: 205.5 },
-      { fx: 203.5, fy: 206 },
-      { fx: 200, fy: 206 },
-    ];
+  const runAndDraw = function() {
 
     const test = graphAlgorthmRunner(graphData.data.points);
+    graphData.answer = test;
+    graphData.answerShown = test.length - 1
 
-    drawGraph(graphData.data.points, test);
+    console.log("look below")
+    console.log(test)
+
+
+    drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links, 
+      graphData.answer[graphData.answerShown].p,
+      graphData.answer[graphData.answerShown].q);
+    graphData.data.text = "Alternate Solution"
     forceUpdate();
   };
 
@@ -211,13 +170,24 @@ export function HomePage({
     repos,
   };
 
+  const drawAlternate = function() {
+    console.log(graphData.answerShown)
+    console.log(graphData.answer)
+    graphData.answerShown = (graphData.answerShown + 1 ) % graphData.answer.length 
+
+    drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links,
+      graphData.answer[graphData.answerShown].p,
+      graphData.answer[graphData.answerShown].q);
+    forceUpdate();    
+  }
+
   // the graph configuration, you only need to pass down properties
   // that you want to override, otherwise default ones will be used
   const myConfig = {
     nodeHighlightBehavior: true,
     node: {
-      color: 'lightgreen',
-      size: 120,
+      color: 'black',
+      size: 10,
       highlightStrokeColor: 'blue',
     },
     link: {
@@ -270,8 +240,10 @@ export function HomePage({
       }
       return 0;
     });
+
+
     let result = [];
-    const count = 0;
+    let count = 0;
     for (let pIndex = 0; pIndex < sortedGraphCoordinates.length; pIndex++) {
       const p = sortedGraphCoordinates[pIndex];
       const qResult = [];
@@ -295,23 +267,34 @@ export function HomePage({
           sortedGraphCoordinates,
           [],
         );
-        console.log(threeTripleResultForQ);
         const links = oneTripleResultForQ[1].concat(threeTripleResultForQ[1]);
+        const countForPQ = oneTripleResultForQ[0] + threeTripleResultForQ[0]
+    
         if (
           threeTripleResultForQ[1] &&
           oneTripleResultForQ[1] &&
-          links.length > result.length
+          count < countForPQ
         ) {
-          result = links;
+          count = countForPQ
+          result = []
+          result.push({p, q, links});
+        }
+        else if (
+          threeTripleResultForQ[1] &&
+          oneTripleResultForQ[1] &&
+          count == countForPQ
+          ){
+          result.push({p, q, links})
         }
       }
     }
-    console.log(result);
+    graphData.data.count = count;
+    console.log("look above")
     return result;
   };
 
   const threeTripleStaircase = function(previous, p, q, input, links) {
-    const modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
+    let modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
 
     let count = previous;
     let result = links;
@@ -344,7 +327,7 @@ export function HomePage({
         );
         const result = twoStaircase(rCoordinate, p, q, pq, rType);
         const resultCopy = Array.from(result);
-        type2 = [previous + result.length - 1, [...modifiedLinks, ...result]];
+        type2 = [previous + result.length, [...modifiedLinks, ...result]];
       } else if (rType == 3) {
         modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
         type1 = threeTripleStaircase(
@@ -368,7 +351,7 @@ export function HomePage({
         );
         const UPR = modifiedInput.filter(
           coord =>
-            coord.x > q.x && coord.x > rCoordinate.x && coord.y > rCoordinate.y,
+            coord.x < rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y ,
         );
         let countForS = 0;
         let resultForS = [];
@@ -398,9 +381,9 @@ export function HomePage({
         a,
         b,
       ) {
-        return b[1].length - a[1].length;
+        return b[0] - a[0];
       })[0];
-      if (resultForR && result.length < resultForR[1].length) {
+      if (resultForR && count < resultForR[0]) {
         count = resultForR[0];
         result = resultForR[1];
       }
@@ -505,13 +488,15 @@ export function HomePage({
   };
 
   const rTypeMethodForThreeTripleStaircase = function(p, q, r) {
-    if (r.y > p.y && r.x <= q.x && r.y <= q.y) {
+
+    if (r.y > p.y && r.x > p.x && r.x <= q.x && r.y <= q.y) {
       return 2.5;
     }
-    if (r.y > p.y && r.x < p.x && r.y < q.y) {
+    if (r && q && r.y > p.y && r.x < p.x && r.y < q.y) {
       return 3;
-    }
-    if (r.x < q.x && r.y > q.y && r.x > p.x && r.y > p.y) {
+    }  
+  
+    if (r.x < q.x && r.y > q.y && r.x > p.x) {
       return 1;
     }
     if (r.y > q.y && r.x < p.x) {
@@ -525,7 +510,7 @@ export function HomePage({
     if (r.y > p.y && r.x <= q.x && r.y <= q.y) {
       return 2;
     }
-    if (r.y < p.y && r.x < q.x) {
+    if (r.y < p.y && r.x < q.x && r.y <q.y) {
       return 3;
     }
     if (r.x > q.x && p.y < r.y && q.y > r.y) {
@@ -569,7 +554,7 @@ export function HomePage({
     // drawOneStair(newNodes,[{ source: "a", target: "b" }, { source: "b", target: "c" }, { source: "c", target: "d" }, { source: "d", target: "e" }])
   };
 
-  const drawGraph = function(nodes, links) {
+  const drawGraph = function(nodes, links, p, q) {
     // nodes has all nodes in the graph
     // links will define which nodes are connected
     let newNodes = [];
@@ -579,7 +564,12 @@ export function HomePage({
     const drawLinksThree = [];
     const drawLinksFour = [];
 
+
     for (const node of nodes) {
+      let color = "black"
+      if (node == q || node == p){
+        color = 'lightgreen'
+      }
       const setUUID = uuid();
       const tempNode = {
         id: setUUID,
@@ -588,6 +578,7 @@ export function HomePage({
         fontColor: 'transparent',
         fontSize: 0,
         size: 50,
+        color: color
       };
 
       newNodes.push(tempNode);
@@ -616,7 +607,7 @@ export function HomePage({
         drawLinksThree.push(tempLink);
       }
     }
-    newNodes = transformCoords(newNodes);
+    newNodes = transformCoords(newNodes,p, q);
     graphData.data.nodes = newNodes;
     drawNodes(graphData.data.nodes);
     drawReverseTwoStair(newNodes, drawLinksTwoReverse);
@@ -672,9 +663,9 @@ export function HomePage({
         };
         graphData.data.nodes.push(newNode);
 
-        let newLink = { source: sourceNode, target: newUUID, color: 'black' };
+        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato' };
         graphData.data.links.push(newLink);
-        newLink = { source: newUUID, target: targetNode, color: 'black' };
+        newLink = { source: newUUID, target: targetNode, color: 'Tomato' };
         graphData.data.links.push(newLink);
       } else {
         graphData.data.links.push(l);
@@ -747,9 +738,9 @@ export function HomePage({
         };
         graphData.data.nodes.push(newNode);
 
-        let newLink = { source: sourceNode, target: newUUID, color: 'black' };
+        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato' };
         graphData.data.links.push(newLink);
-        newLink = { source: newUUID, target: targetNode, color: 'black' };
+        newLink = { source: newUUID, target: targetNode, color: 'Tomato' };
         graphData.data.links.push(newLink);
       } else {
         graphData.data.links.push(l);
@@ -793,9 +784,9 @@ export function HomePage({
         };
         graphData.data.nodes.push(newNode);
 
-        let newLink = { source: sourceNode, target: newUUID, color: 'black' };
+        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato' };
         graphData.data.links.push(newLink);
-        newLink = { source: newUUID, target: targetNode, color: 'black' };
+        newLink = { source: newUUID, target: targetNode, color: 'Tomato' };
         graphData.data.links.push(newLink);
       } else {
         graphData.data.links.push(l);
@@ -837,9 +828,9 @@ export function HomePage({
         };
         graphData.data.nodes.push(newNode);
 
-        let newLink = { source: sourceNode, target: newUUID, color: 'black' };
+        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato' };
         graphData.data.links.push(newLink);
-        newLink = { source: newUUID, target: targetNode, color: 'black' };
+        newLink = { source: newUUID, target: targetNode, color: 'Tomato' };
         graphData.data.links.push(newLink);
       } else {
         graphData.data.links.push(l);
@@ -847,8 +838,8 @@ export function HomePage({
     }
   };
 
-  const transformCoords = function(nodes) {
-    console.log(nodes);
+  const transformCoords = function(nodes, p, q) {
+
     // function that orients graph output with (0,0) in the centre
     // coordinates are given on smaller scale and assumes (0,0) is in the centre
 
@@ -866,12 +857,18 @@ export function HomePage({
 
     // move center to center of graph (400,200)
     for (const coords of nodes) {
+      console.log(coords)
+      // if((coords.x == p.x && coords.y == p.y) || (coords.x == q.x && coords.y == q.y)){
+      //   coords.color = 'red'
+      // }
       // set xCenter and yCenter to (0,0) - shift other points
       const yDiff = coords.fy - yCenter; // move all y values up (smaller y value)
       coords.fy = yDiff * scale + (150 - yCenter * scale);
 
       const xDiff = coords.fx - xCenter; // move all x values to the left (smaller x value)
       coords.fx = xDiff * scale + (250 - xCenter * scale);
+
+      
     }
     // flip the y-values (smaller y-values represent higher position on graph)
     yMax = Math.max(...nodes.map(point => point.fy));
@@ -938,6 +935,10 @@ export function HomePage({
     // window.alert(`Node ${nodeId} is moved to new position. New position is x= ${x} y= ${y}`);
   };
 
+  const setPointNumber = function(number){
+    graphData.data.numberOfPoints = number
+  }
+
   return (
     <article>
       <Helmet>
@@ -948,8 +949,38 @@ export function HomePage({
         />
       </Helmet>
 
-      <Button onClick={draw}>Run Algorithm</Button>
-      <Button onClick={createPoints}>Randomize Points</Button>
+      <Header>
+      </Header>
+
+
+      <br />
+      <Card>
+            <Card.Img variant="top" src={Banner} />
+            <Card.Body>
+              <Button variant="primary" href="http://www.eurocg2019.uu.nl/papers/17.pdf">Go somewhere</Button>
+              <Card.Text>
+                Click the link above to read about the MaxRCH and other similar algorithms
+              </Card.Text>
+            </Card.Body>
+          </Card>
+      <br />
+    <ButtonGroup className="mr-2" aria-label="First group">
+      <Button variant="secondary" size="lg" active onClick={createPoints}>Randomize Points</Button>
+    </ButtonGroup>
+    <Button variant="info" size="sm">
+      Number Of Points <Badge variant="light">20</Badge>
+      <span className="sr-only">unread messages</span>
+    </Button>
+
+    <Jumbotron >
+
+
+        <ButtonGroup className="mr-2" aria-label="First group">
+
+          <Button variant="outline-primary" size="lg" active onClick={graphData.data.text == "Run Algorithm" ? runAndDraw :drawAlternate}>{graphData.data.text}</Button>
+        </ButtonGroup>
+
+      <Badge variant="info">Count: {graphData.data.count}</Badge>   
 
       <Graph
         id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
@@ -966,7 +997,10 @@ export function HomePage({
         onMouseOverLink={onMouseOverLink}
         onMouseOutLink={onMouseOutLink}
         onNodePositionChange={onNodePositionChange}
-      />
+      />      
+    </Jumbotron>
+
+
 
     </article>
   );
@@ -981,14 +1015,12 @@ HomePage.propTypes = {
   onChangeUsername: PropTypes.func,
   onChangeData: PropTypes.func,
   graphData: PropTypes.object,
-  answer: PropTypes.array,
 };
 
 const mapStateToProps = createStructuredSelector({
   repos: makeSelectRepos(),
   username: makeSelectUsername(),
   graphData: makeSelectData(),
-  answer: makeSelectAnswer(),
   loading: makeSelectLoading(),
   error: makeSelectError(),
 });

@@ -53,11 +53,14 @@ export const initialState = {
         { id: 'e', fx: 10, fy: 10 },
       ],
       links: [],
-      // nodes: [],
-      // links: [],
+      answer: [],
+      count: 0,
+      numberOfPoints: 20,
+      text: "Run Algorithm",
+      answerShown: 0
     },
   },
-  answer: [],
+
 };
 
 /* eslint-disable default-case, no-param-reassign */
@@ -70,6 +73,8 @@ const homeReducer = (state = initialState, action) =>
         break;
       case CHANGE_DATA:
         draft.graphData = action.graphData;
+        draft.answer = action.answer;
+        draft.answerShown = action.answerShown;
         break;
     }
   });
