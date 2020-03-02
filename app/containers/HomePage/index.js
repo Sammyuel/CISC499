@@ -55,6 +55,8 @@ import Accordion from 'react-bootstrap/Accordion';
 import reducer from './reducer';
 import saga from './saga';
 import Banner from './Header.png';
+import InputGroup from 'react-bootstrap/InputGroup';
+import FormControl from 'react-bootstrap/FormControl';
 const uuid = require('uuid/v4');
 
 const key = 'home';
@@ -85,9 +87,9 @@ export function HomePage({
 
   const forceUpdate = useForceUpdate();
 
-  const createPoints = function(numberOfPoints){
-    let xPoints = randomizePoints(20)
-    let yPoints = randomizePoints(20)
+  const createPoints = function(){
+    let xPoints = randomizePoints(graphData.data.numberOfPoints)
+    let yPoints = randomizePoints(graphData.data.numberOfPoints)
     let points = []
     for(let i=0; i<xPoints.length; i++){
       points.push({x:xPoints[i], y:yPoints[i]})
@@ -97,7 +99,6 @@ export function HomePage({
 
     for (const node of points) {
       const setUUID = uuid();
-      console.log(parseInt(node.fx))
       const tempNode = {
         id: setUUID,
         fx: parseInt(node.x),
@@ -109,7 +110,6 @@ export function HomePage({
 
       newNodes.push(tempNode);
     }
-    console.log(newNodes)
 
     let selfLinks = []
 
@@ -130,7 +130,6 @@ export function HomePage({
     graphData.data.text = "Run Algorithm"
     graphData.data.count = 0 ;
     forceUpdate();
-    console.log("test")
   }
 
 
@@ -153,9 +152,6 @@ export function HomePage({
     graphData.answer = test;
     graphData.answerShown = test.length - 1
 
-    console.log("look below")
-    console.log(test)
-
 
     drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links, 
       graphData.answer[graphData.answerShown].p,
@@ -171,8 +167,7 @@ export function HomePage({
   };
 
   const drawAlternate = function() {
-    console.log(graphData.answerShown)
-    console.log(graphData.answer)
+
     graphData.answerShown = (graphData.answerShown + 1 ) % graphData.answer.length 
 
     drawGraph(graphData.data.points, graphData.answer[graphData.answerShown].links,
@@ -289,7 +284,6 @@ export function HomePage({
       }
     }
     graphData.data.count = count;
-    console.log("look above")
     return result;
   };
 
@@ -338,10 +332,13 @@ export function HomePage({
           modifiedLinks,
         );
       } else if (rType == 4) {
-        modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-        if (p != q) {
-          modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
+        if (p==q){
+          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
         }
+        else if (p != q) {       
+          modifiedLinks.push({ source: p, target: rCoordinate, "q": q, type: 5 });
+        }
+
         type4 = threeTripleStaircase(
           previous + 1,
           rCoordinate,
@@ -360,8 +357,11 @@ export function HomePage({
           if (rCoordinate == s) {
             continue;
           }
-          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-          modifiedLinks.push({ source: q, target: s, type: rType });
+          if(p == q){
+
+          }
+          modifiedLinks.push({ source: p, target: rCoordinate, type: 3 });
+          modifiedLinks.push({ source: q, target: s, type: 1 });
           const result = threeTripleStaircase(
             previous + 2,
             rCoordinate,
@@ -434,9 +434,18 @@ export function HomePage({
           modifiedLinks,
         );
       } else if (rType == 4) {
-        modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-        if (p != q) {
-          modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
+        if (p==q){
+          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
+        }
+
+        else if (p != q) {
+          // let newPoint = {x:q.x, y:p.y}
+          // modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
+          // modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
+
+          modifiedLinks.push({ source: p, target: rCoordinate, "q": q, type: 5 });
+
+          // modifiedLinks.push({ source: newPoint, target: rCoordinate, type: 4 });
         }
         type4 = oneTripleStaircase(
           previous + 1,
@@ -456,8 +465,8 @@ export function HomePage({
           if (rCoordinate == s) {
             continue;
           }
-          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-          modifiedLinks.push({ source: q, target: s, type: rType });
+          modifiedLinks.push({ source: p, target: rCoordinate, type: 3 });
+          modifiedLinks.push({ source: q, target: s, type: 1 });
           const result = oneTripleStaircase(
             previous + 2,
             rCoordinate,
@@ -486,6 +495,7 @@ export function HomePage({
     }
     return [count, result];
   };
+
 
   const rTypeMethodForThreeTripleStaircase = function(p, q, r) {
 
@@ -565,6 +575,7 @@ export function HomePage({
 
 
     for (const node of nodes) {
+
       let color = "black"
       if (node == q || node == p){
         color = 'lightgreen'
@@ -602,7 +613,52 @@ export function HomePage({
         drawLinksTwoReverse.push(tempLink);
       } else if (link.type == 4) {
         drawLinksFour.push(tempLink);
-      } else {
+      } else if (link.type ==5){
+
+        if (!("q" in link || "p" in link || rCoordinate in link)){
+          continue;
+        }
+
+        let q = newNodes.filter(
+          intermediate =>
+            "q" in link && intermediate.fx == link.q.x && intermediate.fy == link.q.y,
+        )[0];
+
+        let intermediateNode;
+        let newUuid = uuid();
+        if (link.source.y > link.target.y){
+          intermediateNode = {
+                    id: newUuid,
+                    fx: link.q.x,
+                    fy: link.source.y,
+                    fontColor: 'transparent',
+                    fontSize: 0,
+                    size: 1,
+                  };
+        }
+        else{
+          intermediateNode = {
+                    id: newUuid,
+                    fx: link.source.x,
+                    fy: link.q.y,
+                    fontColor: 'transparent',
+                    fontSize: 0,
+                    size: 1,
+                  };
+        }
+
+        newNodes.push(intermediateNode)
+
+        const tempLink1 = { source: sourceID.id, target: intermediateNode.id ,color: "red", opacity:"0.2"};
+        const tempLink2 = { source: q.id, target: intermediateNode.id ,color: "red",opacity:"0.2"};
+        const tempLink3 = { source: intermediateNode.id, target: targetID.id, color: "red" ,opacity:"0.2"};
+        drawLinksFour.push(tempLink1);
+        drawLinksFour.push(tempLink2);
+        drawLinksFour.push(tempLink3);
+
+      }
+
+      else {
         drawLinksThree.push(tempLink);
       }
     }
@@ -662,7 +718,7 @@ export function HomePage({
         };
         graphData.data.nodes.push(newNode);
 
-        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato' };
+        let newLink = { source: sourceNode, target: newUUID, color: 'Tomato'};
         graphData.data.links.push(newLink);
         newLink = { source: newUUID, target: targetNode, color: 'Tomato' };
         graphData.data.links.push(newLink);
@@ -677,6 +733,32 @@ export function HomePage({
     // console.log(links)
 
     // iterate the links to connect nodes
+    for (const l of links) {
+      var sourceNode = l.source;
+      var targetNode = l.target;
+
+      const sourceCoordinate = nodes.filter(
+        sourcePoint => sourcePoint.id == sourceNode,
+      )[0];
+      const targetCoordinate = nodes.filter(
+        targetPoint => targetPoint.id == targetNode,
+      )[0];
+
+      if (sourceCoordinate.fx != targetCoordinate.fx) {
+        const newLink = {
+          source: sourceNode,
+          target: targetNode,
+          color: 'red',
+          opacity: 0.2,
+        };
+        graphData.data.links.push(newLink);
+      } else {
+        graphData.data.links.push(l);
+      }
+    }
+  };
+
+  const drawType5 = function(nodes, links) {
     for (const l of links) {
       var sourceNode = l.source;
       var targetNode = l.target;
@@ -856,7 +938,6 @@ export function HomePage({
 
     // move center to center of graph (400,200)
     for (const coords of nodes) {
-      console.log(coords)
       // if((coords.x == p.x && coords.y == p.y) || (coords.x == q.x && coords.y == q.y)){
       //   coords.color = 'red'
       // }
@@ -938,6 +1019,11 @@ export function HomePage({
     graphData.data.numberOfPoints = number
   }
 
+  const updateValue = function(number){
+    console.log(number.target.value);
+    graphData.data.numberOfPoints = parseInt(number.target.value)
+  }
+
   return (
     <article>
       <Helmet>
@@ -963,16 +1049,22 @@ export function HomePage({
             </Card.Body>
           </Card>
       <br />
-    <ButtonGroup className="mr-2" aria-label="First group">
-      <Button variant="secondary" size="lg" active onClick={createPoints}>Randomize Points</Button>
-    </ButtonGroup>
-    <Button variant="info" size="sm">
-      Number Of Points <Badge variant="light">20</Badge>
-      <span className="sr-only">unread messages</span>
-    </Button>
+
+    <InputGroup className="mb-3"  >
+
+      <InputGroup.Prepend >
+        <Button variant="secondary" size="md" active onClick={createPoints}>Randomize Points</Button>
+      </InputGroup.Prepend>  
+      <FormControl
+        placeholder="20"
+        aria-label="20"
+        aria-describedby="basic-addon2"
+        onChange = {updateValue}
+
+      />      
+    </InputGroup>
 
     <Jumbotron >
-
 
         <ButtonGroup className="mr-2" aria-label="First group">
 

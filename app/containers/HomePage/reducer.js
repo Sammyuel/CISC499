@@ -51,6 +51,7 @@ export const initialState = {
         { id: 'c', fx: 7, fy: 3 },
         { id: 'd', fx: 11, fy: 9 },
         { id: 'e', fx: 10, fy: 10 },
+
       ],
       links: [],
       answer: [],
