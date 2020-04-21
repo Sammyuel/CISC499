@@ -30,4 +30,19 @@ createSelector(
   selectHome,
   homeState => homeState.anserShown);
 
-export { selectHome, makeSelectUsername, makeSelectData, makeSelectAnswer, makeSelectAnswerShown };
+const makeSelectTableT = () => 
+createSelector(
+  selectHome, 
+  homeState => homeState.T);
+
+const makeSelectTableU = () => 
+createSelector(
+  selectHome,
+  homeState => homeState.U);
+
+const makeSelectTableC = () => 
+createSelector(
+  selectHome,
+  homeState => homeState.C);
+
+export { selectHome, makeSelectUsername, makeSelectData, makeSelectAnswer, makeSelectAnswerShown, makeSelectTableT,makeSelectTableU, makeSelectTableC };

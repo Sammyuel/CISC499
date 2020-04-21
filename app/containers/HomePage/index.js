@@ -43,7 +43,10 @@ import {
   makeSelectUsername,
   makeSelectData,
   makeSelectAnswer,
-  makeSelectAnswerShown
+  makeSelectAnswerShown,
+  makeSelectTableT,
+  makeSelectTableU,
+  makeSelectTableC
 } from './selectors';
 import Button from 'react-bootstrap/Button';
 import ButtonGroup from 'react-bootstrap/ButtonGroup'
@@ -75,6 +78,12 @@ export function HomePage({
   onChangeUsername,
   onChangeData,
   graphData,
+  tableTForOneTriple,
+  tableUForOneTriple,
+  tableCForOneTriple,
+  tableTForThreeTriple,
+  tableUForThreeTriple,
+  tableCForThreeTriple
 
 }) {
   useInjectReducer({ key, reducer });
@@ -91,11 +100,11 @@ export function HomePage({
     let xPoints = randomizePoints(graphData.data.numberOfPoints)
     let yPoints = randomizePoints(graphData.data.numberOfPoints)
     let points = []
-    for(let i=0; i<xPoints.length; i++){
+
+    for(let i=0; i<xPoints.length; i+=1){
       points.push({x:xPoints[i], y:yPoints[i]})
     }
     let newNodes = [];
-
 
     for (const node of points) {
       const setUUID = uuid();
@@ -135,8 +144,10 @@ export function HomePage({
 
   const randomizePoints = function(number){
     var arr = [];
-    let max = 60;
-    let min = 10;
+    let distanceScaleFactor = number > 20 ? number * 1.5 : 0
+    let max = number > 10 ? 60 + distanceScaleFactor : 20;
+    let min = number < 10 ? 10 : 0;
+    
     while(arr.length < number){
         var r = Math.floor(Math.random() * (max - min + 1) + min);
         if(arr.indexOf(r) === -1) arr.push(r);
@@ -190,40 +201,9 @@ export function HomePage({
     },
   };
 
-  const sampleCoordinates = [
-    { x: 5, y: 5 },
-    { x: 6, y: 4 },
-    { x: 7, y: 3 },
-    { x: 11, y: 9 },
-    { x: 10, y: 10 },
-  ];
 
   const result = [];
   const previousCount = 0;
-
-  const twoStaircase = function(r, p, q, nodes, type) {
-    let resultLinks = [];
-    const count = 0;
-    const dfs = function(r, p, q, input, links) {
-      links = Array.from(links);
-      links.push({ source: p, target: r, type });
-
-      if (r == q) {
-        // console.log(links)
-        if (resultLinks.length < links.length) {
-          resultLinks = links;
-        }
-      }
-      for (const coordinate of input) {
-        const newInput = input.filter(
-          coord => coord.x > coordinate.x && coord.y < coordinate.y,
-        );
-        dfs(coordinate, r, q, newInput, links);
-      }
-    };
-    dfs(r, p, q, nodes, []);
-    return resultLinks;
-  };
 
   const graphAlgorthmRunner = function(input) {
     const sortedGraphCoordinates = input.sort(function(a, b) {
@@ -236,9 +216,14 @@ export function HomePage({
       return 0;
     });
 
-
     let result = [];
     let count = 0;
+    tableTForOneTriple= {};
+    tableUForOneTriple = {};
+    tableCForOneTriple = {};
+    tableTForThreeTriple = {};
+    tableUForThreeTriple = {};
+    tableCForThreeTriple = {};
     for (let pIndex = 0; pIndex < sortedGraphCoordinates.length; pIndex++) {
       const p = sortedGraphCoordinates[pIndex];
       const qResult = [];
@@ -248,25 +233,24 @@ export function HomePage({
         if (q.y < p.y) {
           continue;
         }
-        const threeTripleResultForQ = threeTripleStaircase(
-          0,
-          p,
-          q,
-          sortedGraphCoordinates,
-          [],
-        );
+
+        let overlapCount = p==q ? 1 : 2
+
         const oneTripleResultForQ = oneTripleStaircase(
-          0,
           p,
           q,
           sortedGraphCoordinates,
-          [],
         );
+        const threeTripleResultForQ = threeTripleStaircase(
+          p,
+          q,
+          sortedGraphCoordinates,
+        );
+      
         const links = oneTripleResultForQ[1].concat(threeTripleResultForQ[1]);
-        const countForPQ = oneTripleResultForQ[0] + threeTripleResultForQ[0]
-    
+        const countForPQ = oneTripleResultForQ[0] + threeTripleResultForQ[0] - overlapCount
+
         if (
-          threeTripleResultForQ[1] &&
           oneTripleResultForQ[1] &&
           count < countForPQ
         ) {
@@ -275,7 +259,6 @@ export function HomePage({
           result.push({p, q, links});
         }
         else if (
-          threeTripleResultForQ[1] &&
           oneTripleResultForQ[1] &&
           count == countForPQ
           ){
@@ -287,31 +270,233 @@ export function HomePage({
     return result;
   };
 
-  const threeTripleStaircase = function(previous, p, q, input, links) {
-    let modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
 
-    let count = previous;
-    let result = links;
-    let twoStaircaseLinks;
+  const oneTripleStaircase = function(p, q, input) {
+    const modifiedInput = input.filter(coordinate => coordinate.x > p.x);
 
-    for (const rCoordinate of modifiedInput) {
-      const rType = rTypeMethodForThreeTripleStaircase(p, q, rCoordinate);
-      let type1;
-      let type2;
-      let type3;
-      let type4;
-      let type5;
-      let modifiedLinks = Array.from(links);
-      if (rType == 1) {
-        modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
-        type1 = threeTripleStaircase(
-          previous + 1,
+    if([p.x, p.y, q.x, q.y] in tableTForOneTriple)
+    {
+      return tableTForOneTriple[[p.x, p.y, q.x, q.y]]
+    }
+
+    let resultLinks = [];
+    let resultCount;
+
+    for (const rCoordinate of modifiedInput){
+      const rType = rTypeMethodForOneTripleStaircase(p, q, rCoordinate);
+      let linksForR = []; 
+      let countForR = 0; 
+
+      if (rType == 1)  // Case Rp\q
+      {
+        let typeA;
+        if([p.x, p.y, rCoordinate.x, rCoordinate.y] in tableTForOneTriple){
+          typeA = tableTForOneTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
+          typeA = oneTripleStaircase(
           p,
           rCoordinate,
-          modifiedInput,
-          modifiedLinks,
+          modifiedInput
+          );
+          tableTForOneTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]] = typeA
+        }
+
+        linksForR.push({ source: q, target: rCoordinate, type: rType});
+        countForR = 1 + typeA[0] 
+        linksForR = linksForR.concat(typeA[1])
+      } 
+      else if (rType == 2) //Case Cp,q
+      {
+        let typeB;
+        if([rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y] in tableCForOneTriple ){
+          typeB = tableCForOneTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
+          const pq = modifiedInput.filter(
+          coordinate =>
+            coordinate.x > rCoordinate.x &&
+            coordinate.y > rCoordinate.y &&
+            coordinate.y <= q.y &&
+            coordinate.x <= q.x,
         );
-      } else if (rType == 2.5) {
+          typeB = twoStaircase(rCoordinate, p, q, pq, rType);
+        }
+        tableCForOneTriple[[p.x,p.y, q.x, q.y]] = typeB
+        countForR = typeB[0] 
+        linksForR = linksForR.concat(typeB[1])
+      } 
+
+      else if (rType == 3) // Case Rq\p
+      {
+        let typeC;
+        if([rCoordinate.x, rCoordinate.y, q.x, q.y] in tableTForOneTriple){
+          typeC = tableTForOneTriple[[rCoordinate.x, rCoordinate.y, q.x, q.y]]
+        }
+        else{
+          typeC = oneTripleStaircase(
+                    rCoordinate,
+                    q,
+                    modifiedInput,
+                  );
+          tableTForOneTriple[[rCoordinate.x, rCoordinate.y, q.x, q.y]] = typeC
+        }
+
+        linksForR.push({ source: p, target: rCoordinate, type: rType });
+        countForR = 1 + typeC[0] 
+        linksForR = linksForR.concat(typeC[1])
+        
+      }
+       else if (rType == 4) // Case Rp,q 
+       {
+        let alphaPQ;
+
+        if (p==q)
+        {
+          alphaPQ = 1;
+          linksForR.push({ source: p, target: rCoordinate, type: rType });
+        }
+
+        else if (p != q) 
+        {
+          alphaPQ = 2;
+          linksForR.push({ source: p, target: rCoordinate, "q": q, type: 5 }); // Type5 refers to visualization function used 
+        }
+
+        let typeD;
+
+        if([rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y] in tableTForOneTriple){
+          typeD = tableTForOneTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
+          typeD= oneTripleStaircase(
+          rCoordinate,
+          rCoordinate,
+          modifiedInput,
+        );
+        }
+
+        countForR = alphaPQ + typeD[0] 
+        linksForR = linksForR.concat(typeD[1])
+        tableTForOneTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]] = typeD
+
+        let typeE // Case Up,r
+        if([p.x, p.y, rCoordinate.x, rCoordinate.y] in tableUForOneTriple)
+        {
+          typeE = tableUForOneTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]];
+        }
+
+        else
+        {
+          const UPR = modifiedInput.filter(
+            coord =>
+              coord.x > rCoordinate.x && coord.y < p.y && coord.y > rCoordinate.y,
+          );
+
+          let resultCountForRS = 0;
+          let resultLinksForRS = []
+
+          for (const s of UPR)
+           {
+            if (rCoordinate == s) {
+              continue;
+            }
+
+            let countForRS = 0;
+            let linksForRS = [];
+
+            linksForRS.push({ source: p, target: rCoordinate, type: 3 });
+            linksForRS.push({ source: q, target: s, type: 1 });
+
+            if([rCoordinate.x, rCoordinate.y, s.x, s.y] in tableTForOneTriple){
+              typeE = tableTForOneTriple[[rCoordinate.x, rCoordinate.y, s.x, s.y]];
+            }
+            else{
+              typeE = oneTripleStaircase(
+              rCoordinate,
+              s,
+              modifiedInput,
+            );
+            }
+
+            countForRS = alphaPQ + typeE[0] 
+            linksForRS = linksForRS.concat(typeE[1])
+
+            if (resultCountForRS < countForRS) 
+            {
+              resultCountForRS = countForRS;
+              resultLinksForRS = linksForRS;
+            }
+
+            tableTForOneTriple[[rCoordinate.x, rCoordinate.y, s.x, s.y]] = typeE
+          }
+
+          if (countForR < resultCountForRS){
+            countForR = resultCountForRS
+            linksForR = resultLinksForRS
+          }
+          tableUForOneTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]] = [resultCountForRS, resultLinksForRS]
+        }
+      }
+
+      if (resultCount == undefined || resultCount <= countForR) {
+        resultCount = countForR
+        resultLinks = linksForR
+      }
+    }
+
+    tableTForOneTriple[[p.x, p.y, q.x, q.y]] = [resultCount, resultLinks]
+
+    return [resultCount, resultLinks];
+  };
+
+    const threeTripleStaircase = function(p, q, input) 
+  {
+    let modifiedInput = input.filter(coordinate => coordinate.x <= q.x);
+
+    if([p.x, p.y, q.x, q.y] in tableTForThreeTriple && tableTForThreeTriple[[p.x, p.y, q.x, q.y]] != undefined)
+    {
+      return tableTForThreeTriple[[p.x, p.y, q.x, q.y]]
+    }
+    if(p == q && modifiedInput.length == 0){
+      return [1, []]
+    }
+
+    let resultLinks = [];
+    let resultCount = 0;
+
+    for (const rCoordinate of modifiedInput){
+      const rType = rTypeMethodForThreeTripleStaircase(p, q, rCoordinate);
+      let linksForR = []; 
+      let countForR = 0; 
+
+      if (rType == 1) 
+      {
+        let typeA;
+        if([p.x, p.y, rCoordinate.x, rCoordinate.y] in tableTForThreeTriple){
+          typeA = tableTForThreeTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
+          typeA = threeTripleStaircase(
+          p,
+          rCoordinate,
+          modifiedInput
+          );
+          tableTForThreeTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]] = typeA
+        }
+
+        linksForR.push({ source: q, target: rCoordinate, type: rType});
+        countForR = 1 + typeA[0] 
+        linksForR = linksForR.concat(typeA[1])
+        
+      } 
+
+      else if (rType == 2.5) {
+        let typeB;
+        if([rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y] in tableCForThreeTriple ){
+          typeB = tableCForThreeTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
         const pq = modifiedInput.filter(
           coordinate =>
             coordinate.x < rCoordinate.x &&
@@ -319,188 +504,162 @@ export function HomePage({
             coordinate.y <= q.y &&
             coordinate.x <= q.x,
         );
-        const result = twoStaircase(rCoordinate, p, q, pq, rType);
-        const resultCopy = Array.from(result);
-        type2 = [previous + result.length, [...modifiedLinks, ...result]];
-      } else if (rType == 3) {
-        modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-        type1 = threeTripleStaircase(
-          previous + 1,
-          rCoordinate,
-          q,
-          modifiedInput,
-          modifiedLinks,
-        );
-      } else if (rType == 4) {
-        if (p==q){
-          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
+          typeB = twoStaircase(rCoordinate, p, q, pq, rType);
         }
-        else if (p != q) {       
-          modifiedLinks.push({ source: p, target: rCoordinate, "q": q, type: 5 });
+        tableCForThreeTriple[[p.x,p.y, q.x, q.y]] = typeB
+        countForR = typeB[0] 
+        linksForR = linksForR.concat(typeB[1])
+      } 
+
+      else if (rType == 3) 
+      {
+        let typeC;
+        if([rCoordinate.x, rCoordinate.y, q.x, q.y] in tableTForThreeTriple){
+          typeC = tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, q.x, q.y]]
+        }
+        else{
+          typeC = threeTripleStaircase(
+                    rCoordinate,
+                    q,
+                    modifiedInput,
+                  );
+          tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, q.x, q.y]] = typeC
         }
 
-        type4 = threeTripleStaircase(
-          previous + 1,
+        linksForR.push({ source: p, target: rCoordinate, type: rType });
+        countForR = 1 + typeC[0] 
+        linksForR = linksForR.concat(typeC[1])
+      }
+       else if (rType == 4) 
+       {
+
+        let typeD;
+
+        if([rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y] in tableTForThreeTriple){
+          typeD = tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]]
+        }
+        else{
+          typeD= threeTripleStaircase(
           rCoordinate,
           rCoordinate,
           modifiedInput,
-          modifiedLinks,
         );
-        const UPR = modifiedInput.filter(
+        }
+
+        let alphaPQ = 1;
+        if (p==q)
+        {
+          linksForR.push({ source: p, target: rCoordinate, type: rType });
+        }
+
+        else if (p != q) 
+        {
+          alphaPQ = 2;
+          linksForR.push({ source: p, target: rCoordinate, "q": q, type: 5 });
+        }
+
+        countForR = alphaPQ + typeD[0] 
+        linksForR = linksForR.concat(typeD[1])
+        tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, rCoordinate.x, rCoordinate.y]] = typeD
+
+        let typeE
+        if([p.x, p.y, rCoordinate.x, rCoordinate.y] in tableUForThreeTriple)
+        {
+          typeE = tableUForThreeTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]];
+        }
+
+        else
+        {
+          const UPR = modifiedInput.filter(
           coord =>
             coord.x > rCoordinate.x && coord.y > q.y && coord.y > rCoordinate.y 
         );
-        let countForS = 0;
-        let resultForS = [];
-        for (const s of UPR) {
-          modifiedLinks = Array.from(links);
-          if (rCoordinate == s) {
-            continue;
-          }
-          if(p == q){
 
-          }
-          modifiedLinks.push({ source: p, target: rCoordinate, type: 3 });
-          modifiedLinks.push({ source: q, target: s, type: 1 });
-          const result = threeTripleStaircase(
-            previous + 2,
-            rCoordinate,
-            s,
-            modifiedInput,
-            modifiedLinks,
-          );
+          let resultCountForRS = 0;
+          let resultLinksForRS = []
 
-          if (countForS < result[0]) {
-            resultForS = result[1];
-            countForS = result[0];
+          for (const s of UPR)
+           {
+            if (rCoordinate == s) {
+              continue;
+            }
+
+            let countForRS = 0;
+            let linksForRS = [];
+
+            linksForRS.push({ source: p, target: rCoordinate, type: 3 });
+            linksForRS.push({ source: q, target: s, type: 1 });
+
+            if([rCoordinate.x, rCoordinate.y, s.x, s.y] in tableTForThreeTriple){
+              typeE = tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, s.x, s.y]];
+            }
+            else{
+              typeE = threeTripleStaircase(
+              rCoordinate,
+              s,
+              modifiedInput,
+            );
+            }
+
+            countForRS = alphaPQ + typeE[0] 
+            linksForRS = linksForRS.concat(typeE[1])
+
+            if (resultCountForRS < countForRS) 
+            {
+              resultCountForRS = countForRS;
+              resultLinksForRS = linksForRS;
+            }
+
+            tableTForThreeTriple[[rCoordinate.x, rCoordinate.y, s.x, s.y]] = typeE
           }
-          type5 = [countForS, resultForS];
+
+          if (countForR < resultCountForRS){
+            countForR = resultCountForRS
+            linksForR = resultLinksForRS
+          }
+          tableUForThreeTriple[[p.x, p.y, rCoordinate.x, rCoordinate.y]] = [resultCountForRS, resultLinksForRS]
         }
       }
-      const resultForR = [type1, type2, type3, type4, type5].sort(function(
-        a,
-        b,
-      ) {
-        return b[0] - a[0];
-      })[0];
-      if (resultForR && count < resultForR[0]) {
-        count = resultForR[0];
-        result = resultForR[1];
+
+      if (resultCount == undefined || resultCount <= countForR) {
+        resultCount = countForR
+        resultLinks = linksForR
       }
     }
-    return [count, result];
+
+    tableTForThreeTriple[[p.x, p.y, q.x, q.y]] = [resultCount, resultLinks]
+
+    return [resultCount, resultLinks];
   };
 
-  const oneTripleStaircase = function(previous, p, q, input, links) {
-    const modifiedInput = input.filter(coordinate => coordinate.x > p.x);
-    let count = previous;
-    let result = links;
-    let twoStaircaseLinks;
+    const twoStaircase = function(r, p, q, nodes, type) {
+    let resultLinks = [];
+    let count = 0;
+    const dfs = function(r, p, q, input, links) {
+      links = Array.from(links);
+      links.push({ source: p, target: r, type });
 
-    for (const rCoordinate of modifiedInput) {
-      const rType = rTypeMethodForOneTripleStaircase(p, q, rCoordinate);
-      let type1;
-      let type2;
-      let type3;
-      let type4;
-      let type5;
-      let modifiedLinks = Array.from(links);
-      if (rType == 1) {
-        modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
-        type1 = oneTripleStaircase(
-          previous + 1,
-          p,
-          rCoordinate,
-          modifiedInput,
-          modifiedLinks,
-        );
-      } else if (rType == 2) {
-        const pq = modifiedInput.filter(
-          coordinate =>
-            coordinate.x > rCoordinate.x &&
-            coordinate.y > rCoordinate.y &&
-            coordinate.y <= q.y &&
-            coordinate.x <= q.x,
-        );
-        const result = twoStaircase(rCoordinate, p, q, pq, rType);
-        type2 = [previous + result.length, [...modifiedLinks, ...result]];
-      } else if (rType == 3) {
-        modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-        type1 = oneTripleStaircase(
-          previous + 1,
-          rCoordinate,
-          q,
-          modifiedInput,
-          modifiedLinks,
-        );
-      } else if (rType == 4) {
-        if (p==q){
-          modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-        }
-
-        else if (p != q) {
-          // let newPoint = {x:q.x, y:p.y}
-          // modifiedLinks.push({ source: p, target: rCoordinate, type: rType });
-          // modifiedLinks.push({ source: q, target: rCoordinate, type: rType });
-
-          modifiedLinks.push({ source: p, target: rCoordinate, "q": q, type: 5 });
-
-          // modifiedLinks.push({ source: newPoint, target: rCoordinate, type: 4 });
-        }
-        type4 = oneTripleStaircase(
-          previous + 1,
-          rCoordinate,
-          rCoordinate,
-          modifiedInput,
-          modifiedLinks,
-        );
-        const UPR = modifiedInput.filter(
-          coord =>
-            coord.x > rCoordinate.x && coord.y < p.y && coord.y > rCoordinate.y,
-        );
-        let countForS = 0;
-        let resultForS = [];
-        for (const s of UPR) {
-          modifiedLinks = Array.from(links);
-          if (rCoordinate == s) {
-            continue;
-          }
-          modifiedLinks.push({ source: p, target: rCoordinate, type: 3 });
-          modifiedLinks.push({ source: q, target: s, type: 1 });
-          const result = oneTripleStaircase(
-            previous + 2,
-            rCoordinate,
-            s,
-            modifiedInput,
-            modifiedLinks,
-          );
-          if (countForS < result[0]) {
-            resultForS = result[1];
-            countForS = result[0];
-          }
-          type5 = [countForS, resultForS];
+      if (r == q) {
+        if (resultLinks.length < links.length) {
+          resultLinks = links;
         }
       }
-      const resultForR = [type1, type2, type3, type4, type5].sort(function(
-        a,
-        b,
-      ) {
-        return b[0] - a[0];
-      })[0];
-
-      if (resultForR && count < resultForR[0]) {
-        count = resultForR[0];
-        result = resultForR[1];
+      for (const coordinate of input) {
+        const newInput = input.filter(
+          coord => coord.x > coordinate.x && coord.y < coordinate.y,
+        );
+        dfs(coordinate, r, q, newInput, links);
       }
-    }
-    return [count, result];
+    };
+    dfs(r, p, q, nodes, []);
+    return [resultLinks.length + 1, resultLinks];
   };
 
 
   const rTypeMethodForThreeTripleStaircase = function(p, q, r) {
 
     if (r.y > p.y && r.x > p.x && r.x <= q.x && r.y <= q.y) {
-      return 2.5;
+      return 2.5; //2.5 is used to deal with drawing appropriate staircase. 
     }
     if (r && q && r.y > p.y && r.x < p.x && r.y < q.y) {
       return 3;
@@ -516,7 +675,7 @@ export function HomePage({
   };
 
   const rTypeMethodForOneTripleStaircase = function(p, q, r) {
-    if (r.y > p.y && r.x <= q.x && r.y <= q.y) {
+    if (r.y >= p.y && r.x <= q.x && r.y <= q.y) {
       return 2;
     }
     if (r.y < p.y && r.x < q.x && r.y <q.y) {
@@ -530,37 +689,6 @@ export function HomePage({
     }
 
     return 5;
-  };
-
-  const caseA = function(pIndex, qIndex, input) {
-    const newInput = input.slice(pIndex, input.length);
-    newInput.forEach((item, index) => {});
-  };
-
-  const caseB = function() {};
-
-  const caseC = function() {};
-
-  const caseD = function() {};
-
-  const caseE = function() {};
-
-  // graph event callbacks
-  const onClickGraph = function() {
-    // window.alert(`Clicked the graph background`);
-    // graphData.data.nodes.push({ id: "John", fx:250, fy:300})
-    // graphData.data.links.push({source:"John", target: "John"})
-    // setTimeout(function(){
-    //   graphData.data.links.push({source:"John", target: "Alice"})
-    //   onChangeData(Object.assign({}, graphData))
-    // }, 2000)
-    // onChangeData(Object.assign({}, graphData))
-    // var testNodes = [{x: 5, y: 5}, {x:6, y:4}, {x:7, y:3}, {x:11, y:9}, {x: 10, y:10}]
-    // drawTwoStair([ {id: "Harry", fx:450,fy:250}, { id: "Sally", fx:400,fy:200}, { id: "Alice", fx:500,fy:400 }],[{ source: "Harry", target: "Sally" }, { source: "Harry", target: "Alice" }])
-    // drawTwoStair()
-    // drawThreeStair()
-    // var newNodes = transformCoords([ {id: "a", fx:5,fy:5}, { id: "b", fx:6,fy:4}, { id: "c", fx:7,fy:3 }, { id: "d", fx:8,fy:2 }, { id: "e", fx:9,fy:1 }])
-    // drawOneStair(newNodes,[{ source: "a", target: "b" }, { source: "b", target: "c" }, { source: "c", target: "d" }, { source: "d", target: "e" }])
   };
 
   const drawGraph = function(nodes, links, p, q) {
@@ -636,6 +764,7 @@ export function HomePage({
                     size: 1,
                   };
         }
+
         else{
           intermediateNode = {
                     id: newUuid,
@@ -875,6 +1004,7 @@ export function HomePage({
     }
     // display on graph
   };
+
   const drawThreeStair = function(nodes, links) {
     // iterate the links to connect nodes
     for (const l of links) {
@@ -1080,7 +1210,6 @@ export function HomePage({
         onClickNode={onClickNode}
         onDoubleClickNode={onDoubleClickNode}
         onRightClickNode={onRightClickNode}
-        onClickGraph={onClickGraph}
         onClickLink={onClickLink}
         onRightClickLink={onRightClickLink}
         onMouseOverNode={onMouseOverNode}
@@ -1106,12 +1235,18 @@ HomePage.propTypes = {
   onChangeUsername: PropTypes.func,
   onChangeData: PropTypes.func,
   graphData: PropTypes.object,
+  T: PropTypes.object,
+  U: PropTypes.object,
+  CTable: PropTypes.object
 };
 
 const mapStateToProps = createStructuredSelector({
   repos: makeSelectRepos(),
   username: makeSelectUsername(),
   graphData: makeSelectData(),
+  T: makeSelectTableT(),
+  U: makeSelectTableU(),
+  CTable: makeSelectTableC(),
   loading: makeSelectLoading(),
   error: makeSelectError(),
 });
